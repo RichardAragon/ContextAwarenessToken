@@ -1,0 +1,16 @@
+def evaluate(self, task, dataset):
+  """Evaluates the performance of the context dictionary on the given task and dataset.
+
+  Args:
+    task: The task to evaluate the context dictionary on.
+    dataset: A dataset of examples for the task.
+
+  Returns:
+    The performance of the context dictionary on the task.
+  """
+
+  # Evaluate the context dictionary on the task.
+  performance = task.evaluate(self.context_dictionary, dataset)
+
+  # Return the performance of the context dictionary on the task.
+  return performance
