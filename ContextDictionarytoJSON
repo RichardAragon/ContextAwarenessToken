@@ -1,0 +1,18 @@
+def export_to_json(self, filename):
+  """Exports the context dictionary to a JSON file.
+
+  Args:
+    filename: The filename to export the context dictionary to.
+  """
+
+  # Convert the context dictionary to a JSON object.
+  json_context_dictionary = {}
+  for word, (category, predicate) in self.context_dictionary.items():
+    json_context_dictionary[word] = {
+      "category": category,
+      "predicate": predicate,
+    }
+
+  # Write the JSON object to a file.
+  with open(filename, "w") as f:
+    json.dump(json_context_dictionary, f)
