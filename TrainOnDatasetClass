@@ -1,0 +1,17 @@
+def train(self, dataset):
+  """Trains the Bayesian neural network on the given dataset.
+
+  Args:
+    dataset: A dataset of word-context pairs, where each context is a list of
+      category-predicate pairs.
+  """
+
+  # Convert the dataset to a format that can be used by the Bayesian neural network.
+  X, y = [], []
+  for word, context in dataset:
+    embedding = self.model.encode(word, "")
+    X.append(embedding)
+    y.append([(category, predicate) for category, predicate in context])
+
+  # Train the Bayesian neural network.
+  self.bnn.fit(X, y)
