@@ -1,0 +1,79 @@
+import random
+import pickle
+import transformers
+import bayesian
+
+class CategoryPredicateClassifier:
+    def __init__(self, categories, predicates, context_generator=None, probability_combiner=None, category_predicate_selector=None, context_dict_filename=None):
+        self.categories = categories
+        self.predicates = predicates
+        self.model = transformers.BERT()
+        self.bnn = bayesian.BNN()
+
+        # If a context generator is not provided, use a default context generator.
+        self.context_generator = context_generator or self.generate_random_context
+
+        # If a probability combiner is not provided, use a default probability combiner.
+        self.probability_combiner = probability_combiner or bayesian.weighted_average
+
+        # If a category and predicate selector is not provided, use a default category and predicate selector.
+        self.category_predicate_selector = category_predicate_selector or bayesian.select_max_probability
+
+        # Load the context dictionary from the provided file if a filename is provided.
+        if context_dict_filename:
+            self.load_context_dictionary(context_dict_filename)
+
+    def generate_random_context(self, word):
+        related_words = self.model.embeddings.get_closest_words(word)
+        related_word = random.choice(related_words)
+        context = f"{word} is related to {related_word}."
+        return context
+
+    def predict_category_and_predicate(self, word, context):
+        embedding = self.model.encode(word, context)
+        probabilities = self.bnn.predict(embedding, self.categories, self.predicates)
+        return probabilities
+
+    def select_category_and_predicate(self, probabilities):
+        (category, predicate) = self.category_predicate_selector(probabilities)
+        return category, predicate
+
+    def create_context_dictionary(self):
+        context_dictionary = {}
+        for word in self.model.vocab:
+            context = self.context_generator(word)
+            probabilities = self.predict_category_and_predicate(word, context)
+            category, predicate = self.select_category_and_predicate(probabilities)
+            context_dictionary[word] = (category, predicate)
+        return context_dictionary
+
+    def save_context_dictionary(self, filename):
+        try:
+            with open(filename, "wb") as f:
+                pickle.dump(self.context_dictionary, f)
+            print(f"Context dictionary saved to {filename}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+    def load_context_dictionary(self, filename):
+        try:
+            with open(filename, "rb") as f:
+                self.context_dictionary = pickle.load(f)
+            print(f"Context dictionary loaded from {filename}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+# Example usage:
+
+# Instantiate the classifier with categories and predicates
+classifier = CategoryPredicateClassifier(["person", "food", "location"],
+                                         {"person": ["name", "occupation", "nationality"],
+                                          "food": ["ingredient", "cuisine", "taste"],
+                                          "location": ["country", "state", "city"]},
+                                         context_dict_filename="context_dict.pkl")
+
+# Create the context dictionary
+context_dict = classifier.create_context_dictionary()
+
+# Save the context dictionary to a file
+classifier.save_context_dictionary("context_dict.pkl")
